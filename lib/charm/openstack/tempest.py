@@ -300,7 +300,7 @@ class TempestCharm(charm.OpenStackCharm):
         if conf.get('https-proxy'):
             env['https_proxy'] = conf['https-proxy']
         #cmd = ['tox', '-e', tox_target]
-        cmd = ['snap', tox_target]
+        cmd = ['tempest-jhobbs.tempest', tox_target]
         f = open(logfile, "w")
         subprocess.call(cmd, cwd=run_dir, stdout=f, stderr=f)
 
