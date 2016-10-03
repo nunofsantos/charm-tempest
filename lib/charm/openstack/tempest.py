@@ -89,11 +89,11 @@ class TempestAdminAdapter(adapters.OpenStackRelationAdapter):
         @returns {'image_id' id1, 'image_alt_id': id2}
         """
         self.init_keystone_client()
-        glance_endpoint = self.kc.service_catalog.url_for(
-            service_type='image',
-            endpoint_type='publicURL')
         image_info = {}
         try:
+            glance_endpoint = self.kc.service_catalog.url_for(
+                service_type='image',
+                endpoint_type='publicURL')
             glance_client = glanceclient.Client(
                 '2', glance_endpoint, token=self.kc.auth_token)
             for image in glance_client.images.list():
@@ -113,11 +113,11 @@ class TempestAdminAdapter(adapters.OpenStackRelationAdapter):
         @returns {'image_id' id1, 'image_alt_id': id2}
         """
         self.init_keystone_client()
-        neutron_ep = self.kc.service_catalog.url_for(
-            service_type='network',
-            endpoint_type='publicURL')
         network_info = {}
         try:
+            neutron_ep = self.kc.service_catalog.url_for(
+                service_type='network',
+                endpoint_type='publicURL')
             neutron_client = neutronclient.Client(
                 endpoint_url=neutron_ep,
                 token=self.kc.auth_token)
@@ -146,16 +146,17 @@ class TempestAdminAdapter(adapters.OpenStackRelationAdapter):
         @returns {'flavor_id' id1, 'flavor_alt_id': id2}
         """
         self.init_keystone_client()
-        nova_ep = self.kc.service_catalog.url_for(
-            service_type='compute',
-            endpoint_type='publicURL'
-        )
         compute_info = {}
-        compute_info['nova_endpoint'] = nova_ep
-        url = urllib.parse.urlparse(nova_ep)
-        compute_info['nova_base'] = '{}://{}'.format(url.scheme,
-                                                     url.netloc.split(':')[0])
         try:
+            nova_ep = self.kc.service_catalog.url_for(
+                service_type='compute',
+                endpoint_type='publicURL'
+            )
+            compute_info['nova_endpoint'] = nova_ep
+            url = urllib.parse.urlparse(nova_ep)
+            compute_info['nova_base'] = '{}://{}'.format(
+                url.scheme,
+                url.netloc.split(':')[0])
             nova_client = novaclient.client.Client(
                 self.keystone_info['service_username'],
                 self.keystone_info['service_password'],
@@ -274,6 +275,11 @@ class TempestCharm(charm.OpenStackCharm):
         PIP_CONF: [],
     }
 
+    def setup_directories(self):
+        for tempest_dir in [self.TEMPEST_ROOT, self.TEMPEST_LOGDIR]:
+            if not os.path.exists(tempest_dir):
+                os.mkdir(tempest_dir)
+
     def setup_git(self, branch, git_dir):
         """Clone tempest and symlink in rendered tempest.conf"""
         conf = hookenv.config()
@@ -293,12 +299,13 @@ class TempestCharm(charm.OpenStackCharm):
             env['http_proxy'] = conf['http-proxy']
         if conf.get('https-proxy'):
             env['https_proxy'] = conf['https-proxy']
-        cmd = ['tox', '-e', tox_target]
+        #cmd = ['tox', '-e', tox_target]
+        cmd = ['snap', tox_target]
         f = open(logfile, "w")
         subprocess.call(cmd, cwd=run_dir, stdout=f, stderr=f)
 
     def get_tempest_files(self, branch_name):
-        """Prepare tempets files and directories
+        """Prepare tempest files and directories
 
         @return git_dir, logfile, run_dir
         """
@@ -316,6 +323,7 @@ class TempestCharm(charm.OpenStackCharm):
         action_info = {
             'tempest-logfile': logfile,
         }
+        self.setup_directories()
         self.setup_git(branch_name, git_dir)
         self.execute_tox(run_dir, logfile, tox_target)
         hookenv.action_set(action_info)

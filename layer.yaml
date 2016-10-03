@@ -1,1 +1,26 @@
-includes: ['layer:openstack', 'interface:keystone-admin']
+"includes":
+- "layer:basic"
+- "layer:openstack"
+- "layer:snap"
+- "interface:keystone-admin"
+"ignore":
+- "unit_tests"
+- "Makefile"
+- ".testr.conf"
+- "test-requirements.txt"
+- "tox.ini"
+"options":
+  "openstack": {}
+  "tempest": {}
+  "basic":
+    "use_venv": !!bool "false"
+    "packages": []
+    "include_system_packages": !!bool "false"
+  "snap":
+    "tempest-jhobbs":
+      "channel": "stable"
+      "devmode": "false"
+      "jailmode": "false"
+      "force_dangerous": "false"
+      "revision": "null"
+"is": "tempest"
